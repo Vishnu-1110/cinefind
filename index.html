@@ -4,14 +4,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>CineFind - Movie Discovery</title>
+    <title>CineFind</title>
 
     <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
 
-    <!-- Navigation Bar -->
+    <!-- ============================= -->
+    <!-- NAVBAR -->
+    <!-- ============================= -->
+
     <nav class="navbar">
 
         <div class="logo">
@@ -20,7 +23,7 @@
 
         <div class="nav-links">
             <a href="#">Home</a>
-            <a href="#">Movies</a>
+            <a href="#movies">Movies</a>
             <a href="#">Web Series</a>
             <a href="#">Watchlist</a>
         </div>
@@ -28,88 +31,118 @@
     </nav>
 
 
-    <!-- Hero Section -->
+    <!-- ============================= -->
+    <!-- HERO -->
+    <!-- ============================= -->
+
     <section class="hero">
 
-        <div class="hero-content">
+        <h1>
+            Find Something Great to Watch
+        </h1>
 
-            <h1>Find Something Great to Watch</h1>
+        <p>
+            Discover movies based on your interests.
+        </p>
 
-            <p>
-                Discover movies and web series based on your favorite genres.
-            </p>
+        <div class="search-box">
 
-            <!-- Search -->
-            <div class="search-box">
+            <input
+                type="text"
+                id="searchInput"
+                placeholder="Search for a movie..."
+            >
 
-                <input
-                    type="text"
-                    id="searchInput"
-                    placeholder="🔍 Search movies or web series..."
-                >
-
-                <button onclick="searchMovies()">
-                    Search
-                </button>
-
-            </div>
+            <button onclick="searchMovies()">
+                Search
+            </button>
 
         </div>
 
     </section>
 
 
-    <!-- Genre Section -->
-    <section class="genres">
+    <!-- ============================= -->
+    <!-- GENRES -->
+    <!-- ============================= -->
 
-        <h2>Explore Genres</h2>
+    <section class="genre-section">
+
+        <h2>
+            Browse by Genre
+        </h2>
 
         <div class="genre-buttons">
 
-            <button onclick="filterGenre('All')">All</button>
-            <button onclick="filterGenre('Action')">Action</button>
-            <button onclick="filterGenre('Comedy')">Comedy</button>
-            <button onclick="filterGenre('Thriller')">Thriller</button>
-            <button onclick="filterGenre('Romance')">Romance</button>
-            <button onclick="filterGenre('Sci-Fi')">Sci-Fi</button>
-            <button onclick="filterGenre('Horror')">Horror</button>
+            <button onclick="filterGenre('All')">
+                All
+            </button>
+
+            <button onclick="filterGenre('Action')">
+                Action
+            </button>
+
+            <button onclick="filterGenre('Comedy')">
+                Comedy
+            </button>
+
+            <button onclick="filterGenre('Thriller')">
+                Thriller
+            </button>
+
+            <button onclick="filterGenre('Romance')">
+                Romance
+            </button>
+
+            <button onclick="filterGenre('Sci-Fi')">
+                Sci-Fi
+            </button>
+
+            <button onclick="filterGenre('Horror')">
+                Horror
+            </button>
 
         </div>
 
     </section>
 
 
-    <!-- Movies Section -->
-    <section class="movie-section">
+    <!-- ============================= -->
+    <!-- MOVIES -->
+    <!-- ============================= -->
 
-        <div class="section-title">
-            <h2>Trending Movies</h2>
-        </div>
+    <section
+        class="movie-section"
+        id="movies"
+    >
 
-        <div id="movieContainer" class="movie-container">
+        <h2>
+            Movies
+        </h2>
 
-    <!-- Movie cards will be created using JavaScript -->
-
-</div>
-
-
-<!-- Movie Details -->
-
-<section id="movieDetails" class="movie-details">
-
-</section>
+        <div
+            id="movieContainer"
+            class="movie-container"
+        ></div>
 
     </section>
 
 
-    <!-- Footer -->
+    <!-- ============================= -->
+    <!-- MOVIE DETAILS -->
+    <!-- ============================= -->
+
+    <section
+        id="movieDetails"
+        class="movie-details"
+    ></section>
+
+
+    <!-- ============================= -->
+    <!-- FOOTER -->
+    <!-- ============================= -->
+
     <footer>
-
-        <h3>🎬 CineFind</h3>
-
-        <p>
-            Discover your next favorite movie.
-        </p>
 
         <p>
             © 2026 CineFind. All rights reserved.
