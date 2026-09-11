@@ -1,12 +1,55 @@
+/* =========================================================
+   CINEFIND - SCRIPT.JS
+   Version 8.0
+   TMDB + Movie Details + Trailers + Similar Movies
+   + OTT Availability
+   ========================================================= */
+
+
+/* =========================================================
+   TMDB CONFIGURATION
+   ========================================================= */
+
 const API_TOKEN = "eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiIwNWYwNzEyYjBlMzAwYTA5MDBkNmZkZTRiMDM2NTVhYyIsIm5iZiI6MTc4Njg3MjIyMy4yNDg5OTk4LCJzdWIiOiI2YTgxODE5ZmZlMTQ1NDAyMTZjOTQyZDciLCJzY29wZXMiOlsiYXBpX3JlYWQiXSwidmVyc2lvbiI6MX0.cB2KBi6KWlu77JtWVD2iWX4jJkovsqQvh9hx-Wu4v8M";
 
 const API_BASE_URL = "https://api.themoviedb.org/3";
 
-const IMAGE_URL = "https://image.tmdb.org/t/p/w500";
+const IMAGE_URL =
+    "https://image.tmdb.org/t/p/w500";
 
-const BACKDROP_URL = "https://image.tmdb.org/t/p/original";
+const BACKDROP_URL =
+    "https://image.tmdb.org/t/p/original";
+
+const PROVIDER_IMAGE_URL =
+    "https://image.tmdb.org/t/p/w185";
 
 
+/* =========================================================
+   OTT CONFIGURATION
+   ========================================================= */
+
+const WATCH_REGION = "IN";
+
+
+/*
+   Stores the movie currently opened
+   in the details section.
+*/
+
+let currentMovieId = null;
+
+
+/*
+   Cache OTT information so that we don't
+   repeatedly request the same movie.
+*/
+
+const watchProviderCache = {};
+
+
+/* =========================================================
+   DOM ELEMENTS
+   ========================================================= */
 
 const movieContainer =
     document.getElementById("movieContainer");
@@ -14,6 +57,10 @@ const movieContainer =
 const movieDetails =
     document.getElementById("movieDetails");
 
+
+/* =========================================================
+   GENRE IDS
+   ========================================================= */
 
 const genreIds = {
 
@@ -32,55 +79,81 @@ const genreIds = {
 };
 
 
+/* =========================================================
+   COMMON TMDB FETCH FUNCTION
+   ========================================================= */
+
+async function tmdbFetch(url) {
+
+    const response = await fetch(url, {
+
+        headers: {
+
+            Authorization:
+                `Bearer ${API_TOKEN}`,
+
+            accept:
+                "application/json"
+
+        }
+
+    });
+
+
+    if (!response.ok) {
+
+        throw new Error(
+            `TMDB API Error: ${response.status}`
+        );
+
+    }
+
+
+    return await response.json();
+
+}
+
+
+/* =========================================================
+   FETCH MOVIES
+   ========================================================= */
+
 async function fetchMovies(url) {
 
-    movieContainer.innerHTML =
-        "<p class='loading'>Loading movies...</p>";
+    movieContainer.innerHTML = `
+        <p class="loading">
+            Loading movies...
+        </p>
+    `;
 
 
     try {
 
-        const response = await fetch(url, {
-
-            headers: {
-
-                Authorization:
-                    `Bearer ${API_TOKEN}`,
-
-                accept: "application/json"
-
-            }
-
-        });
-
-
-        if (!response.ok) {
-
-            throw new Error(
-                `HTTP Error: ${response.status}`
-            );
-
-        }
-
-
         const data =
-            await response.json();
+            await tmdbFetch(url);
 
 
-        displayMovies(data.results);
+        displayMovies(
+            data.results
+        );
 
     }
 
     catch (error) {
 
-        console.error(error);
+        console.error(
+            "Movie loading error:",
+            error
+        );
 
 
         movieContainer.innerHTML = `
 
             <div class="error-message">
 
-                <h3>⚠️ Something went wrong</h3>
+                <h3>
+                    ⚠️ Something went wrong
+                </h3>
 
                 <p>
                     We couldn't load the movies.
@@ -95,18 +168,27 @@ async function fetchMovies(url) {
 }
 
 
+/* =========================================================
+   DISPLAY MOVIES
+   ========================================================= */
+
 function displayMovies(movies) {
 
     movieContainer.innerHTML = "";
 
 
-    if (!movies || movies.length === 0) {
+    if (
+        !movies ||
+        movies.length === 0
+    ) {
 
         movieContainer.innerHTML = `
 
             <div class="error-message">
 
-                <h3>😕 No movies found</h3>
+                <h3>
+                    😕 No movies found
+                </h3>
 
                 <p>
                     Try another search or genre.
@@ -127,27 +209,34 @@ function displayMovies(movies) {
             document.createElement("div");
 
 
-        card.className = "movie-card";
+        card.className =
+            "movie-card";
 
 
-        const poster = movie.poster_path
+        const poster =
+            movie.poster_path
 
-            ? IMAGE_URL + movie.poster_path
+                ? IMAGE_URL +
+                  movie.poster_path
 
-            : "https://via.placeholder.com/500x750?text=No+Poster";
+                : "https://via.placeholder.com/500x750?text=No+Poster";
 
 
         const title =
-            movie.title || "Unknown Title";
+            movie.title ||
+            "Unknown Title";
 
 
         const releaseDate =
-            movie.release_date || "Unknown";
+            movie.release_date ||
+            "Unknown";
 
 
         const rating =
-            movie.vote_average
-                ? movie.vote_average.toFixed(1)
+            movie.vote_average !== undefined
+
+                ? Number(movie.vote_average).toFixed(1)
+
                 : "N/A";
 
 
@@ -165,7 +254,9 @@ function displayMovies(movies) {
 
             <div class="movie-info">
 
-                <h3>${title}</h3>
+                <h3>
+                    ${title}
+                </h3>
 
                 <p>
                     📅 ${releaseDate}
@@ -184,27 +275,30 @@ function displayMovies(movies) {
         `;
 
 
-        /*
-         * When the user clicks a movie card,
-         * open its details.
-         */
-
         card.addEventListener(
             "click",
-            function() {
+            () => {
 
-                getMovieDetails(movie.id);
+                getMovieDetails(
+                    movie.id
+                );
 
             }
         );
 
 
-        movieContainer.appendChild(card);
+        movieContainer.appendChild(
+            card
+        );
 
     });
 
 }
 
+
+/* =========================================================
+   GENRE FILTER
+   ========================================================= */
 
 function filterGenre(genre) {
 
@@ -213,6 +307,7 @@ function filterGenre(genre) {
         const url =
             `${API_BASE_URL}/movie/popular` +
             `?language=en-US&page=1`;
+
 
         fetchMovies(url);
 
@@ -250,10 +345,21 @@ function filterGenre(genre) {
 }
 
 
+/* =========================================================
+   SEARCH MOVIES
+   ========================================================= */
+
 async function searchMovies() {
 
     const searchInput =
-        document.getElementById("searchInput");
+        document.getElementById(
+            "searchInput"
+        );
+
+
+    if (!searchInput) {
+        return;
+    }
 
 
     const query =
@@ -282,58 +388,86 @@ async function searchMovies() {
 }
 
 
+/* =========================================================
+   GET MOVIE DETAILS
+   ========================================================= */
+
 async function getMovieDetails(movieId) {
 
+    movieDetails.style.display =
+        "block";
+
+
     movieDetails.innerHTML = `
+
         <div class="loading">
+
             Loading movie details...
+
         </div>
+
     `;
 
-    movieDetails.style.display = "block";
 
     const url =
-    `${API_BASE_URL}/movie/${movieId}` +
-    `?language=en-US` +
-    `&append_to_response=credits,videos`;
+        `${API_BASE_URL}/movie/${movieId}` +
+        `?language=en-US` +
+        `&append_to_response=credits,videos`;
+
 
     try {
 
-        const response = await fetch(url, {
+        const movie =
+            await tmdbFetch(url);
 
-            headers: {
-                Authorization: `Bearer ${API_TOKEN}`,
-                accept: "application/json"
-            }
 
-        });
+        currentMovieId =
+            movieId;
 
-        if (!response.ok) {
 
-            throw new Error(
-                `HTTP Error: ${response.status}`
-            );
+        /*
+          Display normal movie information.
+        */
 
-        }
+        displayMovieDetails(
+            movie
+        );
 
-        const movie = await response.json();
 
-        displayMovieDetails(movie);
+        /*
+          Get OTT availability.
+        */
 
-        // Get similar movies separately
-        getSimilarMovies(movieId);
+        getWatchProviders(
+            movieId
+        );
+
+
+        /*
+          Get similar movies.
+        */
+
+        getSimilarMovies(
+            movieId
+        );
 
     }
 
     catch (error) {
 
-        console.error(error);
+        console.error(
+            "Movie details error:",
+            error
+        );
+
 
         movieDetails.innerHTML = `
 
             <div class="error-message">
 
-                <h3>⚠️ Unable to load details</h3>
+                <h3>
+                    ⚠️ Unable to load details
+                </h3>
 
                 <p>
                     Please try again.
@@ -344,75 +478,106 @@ async function getMovieDetails(movieId) {
         `;
 
     }
+
 }
 
 
+/* =========================================================
+   DISPLAY MOVIE DETAILS
+   ========================================================= */
+
 function displayMovieDetails(movie) {
 
-    const trailer = findTrailer(movie.videos);
+    const trailer =
+        findTrailer(movie.videos);
 
 
     const backdrop =
         movie.backdrop_path
-            ? BACKDROP_URL + movie.backdrop_path
+
+            ? BACKDROP_URL +
+              movie.backdrop_path
+
             : "";
 
 
     const poster =
         movie.poster_path
-            ? IMAGE_URL + movie.poster_path
+
+            ? IMAGE_URL +
+              movie.poster_path
+
             : "https://via.placeholder.com/500x750?text=No+Poster";
 
 
-    // Genres
+    /* -----------------------------------------------------
+       Genres
+       ----------------------------------------------------- */
 
     const genres =
-        movie.genres && movie.genres.length > 0
+        movie.genres &&
+        movie.genres.length
+
             ? movie.genres
-                .map(genre => genre.name)
+                .map(
+                    genre => genre.name
+                )
                 .join(" • ")
+
             : "Genre unavailable";
 
 
-    // Runtime
+    /* -----------------------------------------------------
+       Runtime
+       ----------------------------------------------------- */
 
     const runtime =
         movie.runtime
+
             ? `${movie.runtime} minutes`
+
             : "Runtime unavailable";
 
 
-    // Rating
+    /* -----------------------------------------------------
+       Rating
+       ----------------------------------------------------- */
 
     const rating =
-        movie.vote_average
-            ? movie.vote_average.toFixed(1)
+        movie.vote_average !== undefined
+
+            ? Number(
+                movie.vote_average
+              ).toFixed(1)
+
             : "N/A";
 
 
-    // Language
+    /* -----------------------------------------------------
+       Languages
+       ----------------------------------------------------- */
 
     const language =
         movie.spoken_languages &&
-        movie.spoken_languages.length > 0
+        movie.spoken_languages.length
+
             ? movie.spoken_languages
-                .map(lang => lang.english_name)
+                .map(
+                    lang =>
+                        lang.english_name ||
+                        lang.name
+                )
                 .join(", ")
+
             : "Language unavailable";
 
 
-    // Cast
+    /* -----------------------------------------------------
+       Director
+       ----------------------------------------------------- */
 
-    const cast =
-        movie.credits &&
-        movie.credits.cast
-            ? movie.credits.cast.slice(0, 8)
-            : [];
-
-
-    // Director
-
-    let director = "Director unavailable";
+    let director =
+        "Director unavailable";
 
 
     if (
@@ -422,7 +587,9 @@ function displayMovieDetails(movie) {
 
         const directorPerson =
             movie.credits.crew.find(
-                person => person.job === "Director"
+                person =>
+                    person.job ===
+                    "Director"
             );
 
 
@@ -436,54 +603,124 @@ function displayMovieDetails(movie) {
     }
 
 
-    // Production Companies
+    /* -----------------------------------------------------
+       Cast
+       ----------------------------------------------------- */
 
-    const companies =
-        movie.production_companies &&
-        movie.production_companies.length > 0
-            ? movie.production_companies
+    const cast =
+        movie.credits &&
+        movie.credits.cast
+
+            ? movie.credits.cast.slice(
+                0,
+                8
+              )
+
             : [];
 
+
+    /* -----------------------------------------------------
+       Production Companies
+       ----------------------------------------------------- */
+
+    const companies =
+        movie.production_companies ||
+        [];
+
+
+    /* -----------------------------------------------------
+       Trailer Button
+       ----------------------------------------------------- */
+
+    let trailerButton = "";
+
+
+    if (trailer) {
+
+        trailerButton = `
+
+            <button
+                class="trailer-button"
+                onclick="openTrailer('${trailer.key}')"
+            >
+
+                ▶ Watch Trailer
+
+            </button>
+
+        `;
+
+    }
+
+    else {
+
+        trailerButton = `
+
+            <p class="no-trailer">
+
+                🎬 Trailer not available
+
+            </p>
+
+        `;
+
+    }
+
+
+    /* -----------------------------------------------------
+       Backdrop Style
+       ----------------------------------------------------- */
+
+    const backdropStyle =
+        backdrop
+
+            ? `
+                style="
+                    background-image:
+                    linear-gradient(
+                        to bottom,
+                        rgba(15,15,15,0.35),
+                        rgba(15,15,15,1)
+                    ),
+                    url('${backdrop}');
+                "
+              `
+
+            : "";
+
+
+    /* =====================================================
+       DETAILS HTML
+       ===================================================== */
 
     movieDetails.innerHTML = `
 
         <div
             class="details-backdrop"
-            style="
-                background-image:
-                linear-gradient(
-                    rgba(0,0,0,0.70),
-                    rgba(15,15,15,1)
-                ),
-                url('${backdrop}');
-            "
+            ${backdropStyle}
         >
 
+            <button
+                class="close-details"
+                onclick="closeMovieDetails()"
+            >
+                ✕
+            </button>
+
+
             <div class="details-content">
-
-                <button
-                    class="close-details"
-                    onclick="closeMovieDetails()"
-                >
-                    ✕ Close
-                </button>
-
-
-                <!-- Poster -->
 
                 <img
                     class="details-poster"
                     src="${poster}"
-                    alt="${movie.title}"
+                    alt="${movie.title || "Movie"}"
                 >
 
-
-                <!-- Main Information -->
 
                 <div class="details-info">
 
                     <h1>
-                        ${movie.title}
+                        ${movie.title || "Unknown Title"}
                     </h1>
 
 
@@ -496,90 +733,52 @@ function displayMovieDetails(movie) {
 
                     <div class="details-meta">
 
-                        📅
-                        ${movie.release_date || "Unknown"}
+                        <span>
+                            📅
+                            ${movie.release_date || "Unknown"}
+                        </span>
 
-                        &nbsp;&nbsp; | &nbsp;&nbsp;
+                        <span>
+                            ⏱️
+                            ${runtime}
+                        </span>
 
-                        ⏱
-                        ${runtime}
+                        <span>
+                            🌐
+                            ${language}
+                        </span>
 
                     </div>
 
 
-                    <div class="details-meta">
+                    <div class="details-genres">
 
-                        🌐
-                        ${language}
+                        ${genres}
 
                     </div>
 
-
-                    <p class="details-genres">
-
-                        🎭 ${genres}
-
-                    </p>
-
-
-                    <!-- Director -->
 
                     <div class="director-box">
 
-                        <h3>
-                            🎥 Director
-                        </h3>
-
-                        <p>
+                        🎬 Director:
+                        <strong>
                             ${director}
-                        </p>
+                        </strong>
 
                     </div>
-
-
-                    <!-- Overview -->
-
-                    <h2>
-                        📝 Overview
-                    </h2>
 
 
                     <p class="details-overview">
 
                         ${
                             movie.overview ||
-                            "No description available."
+                            "No overview available."
                         }
 
                     </p>
 
 
-                    <!-- Trailer -->
-
-                    ${
-                        trailer
-                            ? `
-
-                                <button
-                                    class="trailer-button"
-                                    onclick="openTrailer('${trailer.key}')"
-                                >
-
-                                    ▶ Watch Trailer
-
-                                </button>
-
-                            `
-                            : `
-
-                                <p class="no-trailer">
-
-                                    🎬 Trailer not available
-
-                                </p>
-
-                            `
-                    }
+                    ${trailerButton}
 
 
                 </div>
@@ -587,170 +786,196 @@ function displayMovieDetails(movie) {
             </div>
 
 
-            <!-- Cast Section -->
-
             <div class="extra-details">
 
-                <h2>
-                    👥 Cast
-                </h2>
+                <!-- CAST -->
+
+                <div class="cast-section">
+
+                    <h2>
+                        🎭 Cast
+                    </h2>
 
 
-                <div class="cast-container">
+                    <div class="cast-container">
 
-                    ${
-                        cast.length > 0
+                        ${
+                            cast.length
 
-                        ? cast.map(person => `
+                                ? cast
+                                    .map(person => {
 
-                            <div class="cast-card">
+                                        const castImage =
+                                            person.profile_path
 
-                                ${
-                                    person.profile_path
+                                                ? IMAGE_URL +
+                                                  person.profile_path
 
-                                    ? `
-
-                                        <img
-                                            src="${IMAGE_URL}${person.profile_path}"
-                                            alt="${person.name}"
-                                        >
-
-                                    `
-
-                                    : `
-
-                                        <div class="no-photo">
-
-                                            👤
-
-                                        </div>
-
-                                    `
-                                }
+                                                : "https://via.placeholder.com/185x278?text=No+Image";
 
 
-                                <h3>
+                                        return `
 
-                                    ${person.name}
+                                            <div class="cast-card">
 
-                                </h3>
+                                                <img
+                                                    src="${castImage}"
+                                                    alt="${person.name}"
+                                                >
 
+                                                <h4>
+                                                    ${person.name}
+                                                </h4>
 
-                                <p>
+                                                <p>
+                                                    ${
+                                                        person.character ||
+                                                        "Unknown role"
+                                                    }
+                                                </p>
 
-                                    ${
-                                        person.character ||
-                                        "Unknown role"
-                                    }
+                                            </div>
 
-                                </p>
+                                        `;
 
-                            </div>
+                                    })
+                                    .join("")
 
-                        `).join("")
+                                : `
+                                    <p>
+                                        Cast information unavailable.
+                                    </p>
+                                `
+                        }
 
-                        : `
-
-                            <p>
-
-                                Cast information unavailable.
-
-                            </p>
-
-                        `
-                    }
+                    </div>
 
                 </div>
 
 
-                <!-- Production Companies -->
+                <!-- PRODUCTION -->
 
-                <h2>
+                <div class="production-section">
 
-                    🏢 Production Companies
-
-                </h2>
-
-
-                <div class="company-container">
-
-                    ${
-                        companies.length > 0
-
-                        ? companies.map(company => `
-
-                            <div class="company-card">
-
-                                ${
-                                    company.logo_path
-
-                                    ? `
-
-                                        <img
-                                            src="${IMAGE_URL}${company.logo_path}"
-                                            alt="${company.name}"
-                                        >
-
-                                    `
-
-                                    : `
-
-                                        <div class="company-no-logo">
-
-                                            🎬
-
-                                        </div>
-
-                                    `
-                                }
+                    <h2>
+                        🏢 Production Companies
+                    </h2>
 
 
-                                <p>
+                    <div class="production-container">
 
-                                    ${company.name}
+                        ${
+                            companies.length
 
-                                </p>
+                                ? companies
+                                    .map(company => {
 
-                            </div>
+                                        const companyLogo =
+                                            company.logo_path
 
-                        `).join("")
+                                                ? IMAGE_URL +
+                                                  company.logo_path
 
-                        : `
+                                                : null;
 
-                            <p>
 
-                                Production information unavailable.
+                                        return `
 
-                            </p>
+                                            <div class="company-card">
 
-                        `
-                    }
+                                                ${
+                                                    companyLogo
+
+                                                        ? `
+
+                                                            <img
+                                                                src="${companyLogo}"
+                                                                alt="${company.name}"
+                                                            >
+
+                                                          `
+
+                                                        : `
+                                                            <div
+                                                                class="company-no-logo"
+                                                            >
+                                                                🎬
+                                                            </div>
+                                                          `
+                                                }
+
+
+                                                <p>
+                                                    ${company.name}
+                                                </p>
+
+                                            </div>
+
+                                        `;
+
+                                    })
+                                    .join("")
+
+                                : `
+                                    <p>
+                                        Production information unavailable.
+                                    </p>
+                                `
+                        }
+
+                    </div>
+
+                </div>
+
+
+                <!-- OTT -->
+
+                <div class="ott-section">
+
+                    <h2>
+                        📺 Where to Watch in India
+                    </h2>
+
+
+                    <div
+                        id="watchProviders"
+                        class="watch-providers"
+                    >
+
+                        <p class="loading">
+
+                            Loading streaming options...
+
+                        </p>
+
+                    </div>
 
                 </div>
 
 
-                <!-- Similar Movies -->
+                <!-- SIMILAR MOVIES -->
 
-                <h2>
+                <div class="similar-section">
 
-                    🎬 Similar Movies
+                    <h2>
+                        🎬 Similar Movies
+                    </h2>
 
-                </h2>
 
+                    <div
+                        id="similarMovies"
+                        class="similar-movies"
+                    >
 
-                <div
-                    id="similarMovies"
-                    class="similar-container"
-                >
+                        <p class="loading">
 
-                    <p class="loading">
+                            Loading similar movies...
 
-                        Loading similar movies...
+                        </p>
 
-                    </p>
+                    </div>
 
                 </div>
-
 
             </div>
 
@@ -759,77 +984,666 @@ function displayMovieDetails(movie) {
     `;
 
 
-    movieDetails.scrollIntoView({
+    /*
+      Scroll to details.
+    */
 
-        behavior: "smooth"
+    setTimeout(() => {
 
-    });
+        movieDetails.scrollIntoView({
+            behavior: "smooth",
+            block: "start"
+        });
+
+    }, 100);
 
 }
 
+
+/* =========================================================
+   OTT / WATCH PROVIDERS
+   ========================================================= */
+
+async function getWatchProviders(movieId) {
+
+    const watchProviders =
+        document.getElementById(
+            "watchProviders"
+        );
+
+
+    if (!watchProviders) {
+        return;
+    }
+
+
+    /*
+      Show cached data if available.
+    */
+
+    if (
+        watchProviderCache[movieId]
+    ) {
+
+        displayWatchProviders(
+            watchProviderCache[movieId]
+        );
+
+        return;
+
+    }
+
+
+    watchProviders.innerHTML = `
+
+        <p class="loading">
+
+            Loading streaming options...
+
+        </p>
+
+    `;
+
+
+    const url =
+        `${API_BASE_URL}/movie/${movieId}/watch/providers`;
+
+
+    try {
+
+        const data =
+            await tmdbFetch(url);
+
+
+        watchProviderCache[movieId] =
+            data;
+
+
+        /*
+          Prevent old movie's provider
+          information from appearing on
+          the newly opened movie.
+        */
+
+        if (
+            currentMovieId !== movieId
+        ) {
+
+            return;
+
+        }
+
+
+        displayWatchProviders(
+            data
+        );
+
+    }
+
+    catch (error) {
+
+        console.error(
+            "OTT provider error:",
+            error
+        );
+
+
+        if (
+            currentMovieId !== movieId
+        ) {
+
+            return;
+
+        }
+
+
+        watchProviders.innerHTML = `
+
+            <div class="no-watch-providers">
+
+                <p>
+
+                    ⚠️ Unable to load
+                    streaming information.
+
+                </p>
+
+            </div>
+
+        `;
+
+    }
+
+}
+
+
+/* =========================================================
+   DISPLAY OTT PROVIDERS
+   ========================================================= */
+
+function displayWatchProviders(data) {
+
+    const watchProviders =
+        document.getElementById(
+            "watchProviders"
+        );
+
+
+    if (!watchProviders) {
+        return;
+    }
+
+
+    const regionData =
+        data &&
+        data.results
+            ? data.results[WATCH_REGION]
+            : null;
+
+
+    if (!regionData) {
+
+        watchProviders.innerHTML = `
+
+            <div class="no-watch-providers">
+
+                <p>
+
+                    😕 No streaming,
+                    rental, or purchase
+                    information found
+                    in India.
+
+                </p>
+
+                <p class="watch-provider-credit">
+
+                    Streaming availability data
+                    powered by
+                    <strong>JustWatch</strong>.
+
+                </p>
+
+            </div>
+
+        `;
+
+        return;
+
+    }
+
+
+    /*
+      Streaming providers:
+      - flatrate
+      - free
+      - ads
+    */
+
+    const streamingProviders = [
+        ...(regionData.flatrate || []),
+        ...(regionData.free || []),
+        ...(regionData.ads || [])
+    ];
+
+
+    /*
+      Remove duplicate providers.
+    */
+
+    const uniqueStreamingProviders =
+        Array.from(
+            new Map(
+                streamingProviders.map(
+                    provider => [
+                        provider.provider_id,
+                        provider
+                    ]
+                )
+            ).values()
+        );
+
+
+    /*
+      Rental providers.
+    */
+
+    const rentProviders =
+        regionData.rent || [];
+
+
+    const uniqueRentProviders =
+        Array.from(
+            new Map(
+                rentProviders.map(
+                    provider => [
+                        provider.provider_id,
+                        provider
+                    ]
+                )
+            ).values()
+        );
+
+
+    /*
+      Purchase providers.
+    */
+
+    const buyProviders =
+        regionData.buy || [];
+
+
+    const uniqueBuyProviders =
+        Array.from(
+            new Map(
+                buyProviders.map(
+                    provider => [
+                        provider.provider_id,
+                        provider
+                    ]
+                )
+            ).values()
+        );
+
+
+    let html = "";
+
+
+    /* =====================================================
+       STREAMING
+       ===================================================== */
+
+    if (
+        uniqueStreamingProviders.length > 0
+    ) {
+
+        html += `
+
+            <div class="ott-group">
+
+                <h3>
+                    📡 Streaming
+                </h3>
+
+
+                <div class="provider-container">
+
+                    ${
+                        uniqueStreamingProviders
+                            .map(
+                                provider => {
+
+                                    const logo =
+                                        provider.logo_path
+
+                                            ? PROVIDER_IMAGE_URL +
+                                              provider.logo_path
+
+                                            : null;
+
+
+                                    return `
+
+                                        <div
+                                            class="provider-card"
+                                            title="${provider.provider_name}"
+                                        >
+
+                                            ${
+                                                logo
+
+                                                    ? `
+
+                                                        <img
+                                                            src="${logo}"
+                                                            alt="${provider.provider_name}"
+                                                        >
+
+                                                      `
+
+                                                    : `
+
+                                                        <div
+                                                            class="provider-no-logo"
+                                                        >
+                                                            🎬
+                                                        </div>
+
+                                                      `
+                                            }
+
+
+                                            <p>
+                                                ${provider.provider_name}
+                                            </p>
+
+                                        </div>
+
+                                    `;
+
+                                }
+                            )
+                            .join("")
+                    }
+
+                </div>
+
+            </div>
+
+        `;
+
+    }
+
+
+    /* =====================================================
+       RENT
+       ===================================================== */
+
+    if (
+        uniqueRentProviders.length > 0
+    ) {
+
+        html += `
+
+            <div class="ott-group">
+
+                <h3>
+                    💳 Rent
+                </h3>
+
+
+                <div class="provider-container">
+
+                    ${
+                        uniqueRentProviders
+                            .map(
+                                provider => {
+
+                                    const logo =
+                                        provider.logo_path
+
+                                            ? PROVIDER_IMAGE_URL +
+                                              provider.logo_path
+
+                                            : null;
+
+
+                                    return `
+
+                                        <div
+                                            class="provider-card"
+                                            title="${provider.provider_name}"
+                                        >
+
+                                            ${
+                                                logo
+
+                                                    ? `
+
+                                                        <img
+                                                            src="${logo}"
+                                                            alt="${provider.provider_name}"
+                                                        >
+
+                                                      `
+
+                                                    : `
+
+                                                        <div
+                                                            class="provider-no-logo"
+                                                        >
+                                                            🎬
+                                                        </div>
+
+                                                      `
+                                            }
+
+
+                                            <p>
+                                                ${provider.provider_name}
+                                            </p>
+
+                                        </div>
+
+                                    `;
+
+                                }
+                            )
+                            .join("")
+                    }
+
+                </div>
+
+            </div>
+
+        `;
+
+    }
+
+
+    /* =====================================================
+       BUY
+       ===================================================== */
+
+    if (
+        uniqueBuyProviders.length > 0
+    ) {
+
+        html += `
+
+            <div class="ott-group">
+
+                <h3>
+                    🛒 Buy
+                </h3>
+
+
+                <div class="provider-container">
+
+                    ${
+                        uniqueBuyProviders
+                            .map(
+                                provider => {
+
+                                    const logo =
+                                        provider.logo_path
+
+                                            ? PROVIDER_IMAGE_URL +
+                                              provider.logo_path
+
+                                            : null;
+
+
+                                    return `
+
+                                        <div
+                                            class="provider-card"
+                                            title="${provider.provider_name}"
+                                        >
+
+                                            ${
+                                                logo
+
+                                                    ? `
+
+                                                        <img
+                                                            src="${logo}"
+                                                            alt="${provider.provider_name}"
+                                                        >
+
+                                                      `
+
+                                                    : `
+
+                                                        <div
+                                                            class="provider-no-logo"
+                                                        >
+                                                            🎬
+                                                        </div>
+
+                                                      `
+                                            }
+
+
+                                            <p>
+                                                ${provider.provider_name}
+                                            </p>
+
+                                        </div>
+
+                                    `;
+
+                                }
+                            )
+                            .join("")
+                    }
+
+                </div>
+
+            </div>
+
+        `;
+
+    }
+
+
+    /* =====================================================
+       NO PROVIDERS
+       ===================================================== */
+
+    if (html === "") {
+
+        html = `
+
+            <div class="no-watch-providers">
+
+                <p>
+
+                    😕 No streaming,
+                    rental, or purchase
+                    options found in India.
+
+                </p>
+
+            </div>
+
+        `;
+
+    }
+
+
+    /* =====================================================
+       JUSTWATCH ATTRIBUTION
+       ===================================================== */
+
+    html += `
+
+        <p class="watch-provider-credit">
+
+            Streaming availability data
+            powered by
+            <strong>JustWatch</strong>.
+
+        </p>
+
+    `;
+
+
+    watchProviders.innerHTML =
+        html;
+
+}
+
+
+/* =========================================================
+   FIND TRAILER
+   ========================================================= */
+
 function findTrailer(videos) {
 
-    if (!videos || !videos.results) {
+    if (
+        !videos ||
+        !videos.results
+    ) {
+
         return null;
+
     }
 
 
     const youtubeVideos =
-        videos.results.filter(video =>
-            video.site === "YouTube"
+        videos.results.filter(
+            video =>
+                video.site === "YouTube"
         );
 
 
-    if (youtubeVideos.length === 0) {
+    if (
+        youtubeVideos.length === 0
+    ) {
+
         return null;
+
     }
 
 
-    // First priority:
-    // Official Trailer
+    /*
+      Priority 1:
+      Official Trailer
+    */
 
     let trailer =
-        youtubeVideos.find(video =>
-            video.type === "Trailer" &&
-            video.official === true
+        youtubeVideos.find(
+            video =>
+                video.type === "Trailer" &&
+                video.official === true
         );
 
 
-    // Second priority:
-    // Any Trailer
+    /*
+      Priority 2:
+      Any Trailer
+    */
 
     if (!trailer) {
 
         trailer =
-            youtubeVideos.find(video =>
-                video.type === "Trailer"
+            youtubeVideos.find(
+                video =>
+                    video.type === "Trailer"
             );
 
     }
 
 
-    // Third priority:
-    // Official Teaser
+    /*
+      Priority 3:
+      Official Teaser
+    */
 
     if (!trailer) {
 
         trailer =
-            youtubeVideos.find(video =>
-                video.type === "Teaser" &&
-                video.official === true
+            youtubeVideos.find(
+                video =>
+                    video.type === "Teaser" &&
+                    video.official === true
             );
 
     }
 
 
-    // Fourth priority:
-    // Any Teaser
+    /*
+      Priority 4:
+      Any Teaser
+    */
 
     if (!trailer) {
 
         trailer =
-            youtubeVideos.find(video =>
-                video.type === "Teaser"
+            youtubeVideos.find(
+                video =>
+                    video.type === "Teaser"
             );
 
     }
@@ -839,7 +1653,17 @@ function findTrailer(videos) {
 
 }
 
+
+/* =========================================================
+   OPEN TRAILER
+   ========================================================= */
+
 function openTrailer(videoKey) {
+
+    if (!videoKey) {
+        return;
+    }
+
 
     const youtubeURL =
         `https://www.youtube.com/watch?v=${videoKey}`;
@@ -852,16 +1676,12 @@ function openTrailer(videoKey) {
 
 }
 
+
+/* =========================================================
+   GET SIMILAR MOVIES
+   ========================================================= */
+
 async function getSimilarMovies(movieId) {
-
-    const similarContainer =
-        document.getElementById("similarMovies");
-
-
-    if (!similarContainer) {
-        return;
-    }
-
 
     const url =
         `${API_BASE_URL}/movie/${movieId}/similar` +
@@ -870,32 +1690,8 @@ async function getSimilarMovies(movieId) {
 
     try {
 
-        const response =
-            await fetch(url, {
-
-                headers: {
-
-                    Authorization:
-                        `Bearer ${API_TOKEN}`,
-
-                    accept: "application/json"
-
-                }
-
-            });
-
-
-        if (!response.ok) {
-
-            throw new Error(
-                `HTTP Error: ${response.status}`
-            );
-
-        }
-
-
         const data =
-            await response.json();
+            await tmdbFetch(url);
 
 
         displaySimilarMovies(
@@ -906,137 +1702,163 @@ async function getSimilarMovies(movieId) {
 
     catch (error) {
 
-        console.error(error);
+        console.error(
+            "Similar movies error:",
+            error
+        );
 
-        similarContainer.innerHTML = `
 
-            <p>
-                Similar movies could not be loaded.
-            </p>
+        const container =
+            document.getElementById(
+                "similarMovies"
+            );
 
-        `;
+
+        if (container) {
+
+            container.innerHTML = `
+
+                <p>
+                    Similar movies unavailable.
+                </p>
+
+            `;
+
+        }
 
     }
 
 }
+
+
+/* =========================================================
+   DISPLAY SIMILAR MOVIES
+   ========================================================= */
+
 function displaySimilarMovies(movies) {
 
     const container =
-        document.getElementById("similarMovies");
+        document.getElementById(
+            "similarMovies"
+        );
 
 
-    if (!movies || movies.length === 0) {
+    if (!container) {
+        return;
+    }
+
+
+    if (
+        !movies ||
+        movies.length === 0
+    ) {
 
         container.innerHTML = `
 
             <p>
-                No similar movies found.
+                Similar movies unavailable.
             </p>
 
         `;
 
         return;
+
     }
 
 
-    container.innerHTML = "";
+    container.innerHTML =
+        movies
+            .slice(0, 6)
+            .map(movie => {
+
+                const poster =
+                    movie.poster_path
+
+                        ? IMAGE_URL +
+                          movie.poster_path
+
+                        : "https://via.placeholder.com/500x750?text=No+Poster";
 
 
-    movies
-        .slice(0, 6)
-        .forEach(movie => {
+                return `
 
-            const card =
-                document.createElement("div");
+                    <div
+                        class="similar-card"
+                        onclick="getMovieDetails(${movie.id})"
+                    >
 
-
-            card.className =
-                "similar-card";
-
-
-            const poster =
-                movie.poster_path
-
-                    ? IMAGE_URL + movie.poster_path
-
-                    : "https://via.placeholder.com/500x750?text=No+Poster";
+                        <img
+                            src="${poster}"
+                            alt="${movie.title || "Movie"}"
+                        >
 
 
-            card.innerHTML = `
+                        <h3>
+                            ${movie.title || "Unknown Title"}
+                        </h3>
 
-                <img
-                    src="${poster}"
-                    alt="${movie.title}"
-                >
+                    </div>
 
-                <div class="similar-info">
+                `;
 
-                    <h3>
-                        ${movie.title}
-                    </h3>
-
-                    <p>
-                        ⭐
-                        ${
-                            movie.vote_average
-                                ? movie.vote_average.toFixed(1)
-                                : "N/A"
-                        }
-                    </p>
-
-                </div>
-
-            `;
-
-
-            card.addEventListener(
-                "click",
-                function() {
-
-                    getMovieDetails(movie.id);
-
-                }
-            );
-
-
-            container.appendChild(card);
-
-        });
+            })
+            .join("");
 
 }
+
+
+/* =========================================================
+   CLOSE MOVIE DETAILS
+   ========================================================= */
 
 function closeMovieDetails() {
 
-    movieDetails.style.display = "none";
+    if (!movieDetails) {
+        return;
+    }
+
+
+    movieDetails.style.display =
+        "none";
+
+
+    currentMovieId = null;
 
 }
 
 
-function showTrailerMessage() {
+/* =========================================================
+   ENTER KEY SEARCH
+   ========================================================= */
 
-    alert(
-        "Trailer integration is coming in Version 3! 🎬"
+const searchInput =
+    document.getElementById(
+        "searchInput"
+    );
+
+
+if (searchInput) {
+
+    searchInput.addEventListener(
+        "keydown",
+        function(event) {
+
+            if (
+                event.key === "Enter"
+            ) {
+
+                searchMovies();
+
+            }
+
+        }
     );
 
 }
 
 
-const searchInput =
-    document.getElementById("searchInput");
-
-
-searchInput.addEventListener(
-    "keydown",
-    function(event) {
-
-        if (event.key === "Enter") {
-
-            searchMovies();
-
-        }
-
-    }
-);
-
+/* =========================================================
+   INITIAL LOAD
+   ========================================================= */
 
 filterGenre("All");
