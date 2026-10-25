@@ -72,3 +72,8 @@ The API allows only VS Code Live Server's usual origins on port 5500: localhost 
 ## Local account security
 
 Use this account system only for local development on your own computer. It uses salted scrypt password hashes and 14-day HttpOnly session cookies. There is no email verification, password reset, login rate limiting, or production deployment security review. Do not expose this API to the internet. For a hosted launch, move accounts to a managed authentication provider or complete a production security review and enforce HTTPS.
+
+## Hosted deployment
+
+GitHub Pages hosts static files only and cannot run this FastAPI app or its database. For a hosted app, deploy FastAPI with managed PostgreSQL and open the website from the FastAPI service HTTPS address. The website now uses the local port 8000 during local development and its own origin when hosted together with FastAPI. Set APP_ENV=production, DATABASE_URL, and a rotated TMDB_BEARER_TOKEN in the host secret settings; never commit secret values. Before public account use, complete a production security review or move accounts to a managed authentication provider. The GitHub Pages address remains a static preview until this backend is deployed.
+

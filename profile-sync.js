@@ -1,7 +1,12 @@
 /* Local FastAPI/SQLite account and profile sync. */
 (function () {
-    const API_HOST = window.location && window.location.hostname === "localhost" ? "localhost" : "127.0.0.1";
-    const API_ROOT = "http://" + API_HOST + ":8000";
+    const hostname = window.location && window.location.hostname || "";
+    const isLocalHost = hostname === "localhost" || hostname === "127.0.0.1" || hostname === "[::1]";
+    const isGitHubPagesPreview = hostname.endsWith(".github.io");
+    const API_ROOT = isLocalHost ? window.location.protocol + "//" + hostname + ":8000" : window.location.origin;
+    window.CineFindApiRoot = API_ROOT;
+    window.CineFindIsGitHubPagesPreview = isGitHubPagesPreview;
+
     const PROFILE_KEY = "cinefind_local_profile_id_v10";
     const OUTBOX_KEY = "cinefind_database_outbox_v10";
     const PENDING_PREFS_KEY = "cinefind_pending_database_preferences_v10";
@@ -13,7 +18,7 @@
         const messages = {
             connecting: "Connecting to the local database…",
             connected: "Local database connected; saved titles and supported preferences sync here.",
-            offline: "Database unavailable. Browser data is retained; pending changes retry after refresh or the next Watchlist change.",
+            offline: window.CineFindIsGitHubPagesPreview ? "GitHub Pages hosts website files only; the CineFind API and database must be deployed separately. Browser data is retained." : "Database unavailable. Browser data is retained; pending changes retry after refresh or the next Watchlist change.",
         };
         const message = messages[state] || messages.connecting;
         document.querySelectorAll("[data-database-status]").forEach(node => { node.textContent = message; });
@@ -239,3 +244,4 @@
     }
     window.CineFindDatabase = { syncSavedTitles, addSavedTitle, removeSavedTitle, savePreferences, syncPreferences, reportDatabaseStatus, setAuthenticatedProfile, restoreSession, registerAccount, loginAccount, logoutAccount };
 })();
+

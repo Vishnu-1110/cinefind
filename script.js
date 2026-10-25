@@ -3,8 +3,8 @@
    ========================================================= */
 
 
-const TMDB_API_HOST = window.location && window.location.hostname === "localhost" ? "localhost" : "127.0.0.1";
-const API_BASE_URL = "http://" + TMDB_API_HOST + ":8000/api/tmdb";
+const API_ROOT = window.CineFindApiRoot || window.location.origin;
+const API_BASE_URL = API_ROOT + "/api/tmdb";
 
 const IMAGE_URL =
     "https://image.tmdb.org/t/p/w500";
@@ -97,14 +97,11 @@ async function tmdbFetch(url) {
 
 
     if (!response.ok) {
-
-        throw new Error(
-            `TMDB API Error: ${response.status}`
-        );
-
+        if (window.CineFindIsGitHubPagesPreview) {
+            throw new Error("GitHub Pages is a static preview and does not host the CineFind API. Deploy FastAPI with a database, then open its app address.");
+        }
+        throw new Error("CineFind API error: " + response.status);
     }
-
-
     return await response.json();
 
 }

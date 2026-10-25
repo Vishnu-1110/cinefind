@@ -126,9 +126,11 @@
                 closeModal();
             } catch (error) {
                 const errorText = error && error.message ? String(error.message) : "";
-                message.textContent = /failed to fetch|networkerror|load failed/i.test(errorText)
-                    ? `Cannot connect from ${window.location.origin}. Open CineFind with VS Code Live Server and keep the FastAPI window running.`
-                    : errorText || "We could not complete that request. Check the local backend and try again.";
+                message.textContent = window.CineFindIsGitHubPagesPreview || /failed to fetch|networkerror|load failed/i.test(errorText)
+                    ? (window.CineFindIsGitHubPagesPreview
+                        ? "GitHub Pages only hosts website files. Deploy the FastAPI app with a hosted database, then open its app address to use accounts."
+                        : "Cannot reach CineFind API at " + (window.CineFindApiRoot || window.location.origin) + ". Start FastAPI or check the deployed app.")
+                    : errorText || "We could not complete that request. Check the backend and try again.";
             } finally {
                 clearPasswords();
                 if (button) button.disabled = false;
@@ -196,3 +198,4 @@
     accountInitializationPromise = initializeAccountSession();
     window.CineFindAccountReady = accountInitializationPromise;
 })();
+
