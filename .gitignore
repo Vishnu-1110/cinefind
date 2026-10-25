@@ -1,0 +1,15 @@
+# Local secrets
+.env
+**/.env
+.venv/
+venv/
+**/__pycache__/
+*.py[cod]
+.pytest_cache/
+backend/data/
+*.db
+*.sqlite
+*.sqlite3
+
+work/
+node_modules/

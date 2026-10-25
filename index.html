@@ -22,10 +22,16 @@
         </div>
 
         <div class="nav-links">
-            <a href="#">Home</a>
-            <a href="#movies">Movies</a>
-            <a href="#">Web Series</a>
-            <a href="#">Watchlist</a>
+            <a href="#" id="navHome">Home</a>
+            <a href="#movies" id="navMovies">Movies</a>
+            <a href="#movies" id="navTV">Web Series</a>
+            <a href="mood.html">🎭 Mood Discovery</a>
+            <a href="#likesSection" id="navLikes">My Likes</a>
+            <a href="#watchlistSection" id="navWatchlist">Watchlist</a>
+            <button type="button" class="nav-login-button" id="authOpenLoginButton">Login</button>
+            <button type="button" class="nav-login-button" id="authOpenSignupButton">Sign Up</button>
+            <span class="auth-account-email" id="authAccountEmail" hidden></span>
+            <button type="button" class="nav-login-button" id="authLogoutButton" hidden>Logout</button>
         </div>
 
     </nav>
@@ -41,7 +47,7 @@
             Find Something Great to Watch
         </h1>
 
-        <p>
+        <p id="heroDescription">
             Discover movies based on your interests.
         </p>
 
@@ -50,7 +56,7 @@
             <input
                 type="text"
                 id="searchInput"
-                placeholder="Search for a movie..."
+                placeholder="Search movies and web series..."
             >
 
             <button onclick="searchMovies()">
@@ -72,7 +78,7 @@
             Browse by Genre
         </h2>
 
-        <div class="genre-buttons">
+        <div class="genre-buttons" id="movieGenreButtons">
 
             <button onclick="filterGenre('All')">
                 All
@@ -104,6 +110,47 @@
 
         </div>
 
+        <div class="genre-buttons" id="tvGenreButtons" style="display: none;" aria-label="TV show genres"></div>
+
+    </section>
+
+    <section id="tvBrowseControls" class="tv-browse-controls" style="display: none;" aria-label="Web series browsing options">
+        <div class="tv-source-buttons">
+            <button type="button" class="tv-source-button is-selected" data-tv-source="popular">Popular</button>
+            <button type="button" class="tv-source-button" data-tv-source="trending">Trending This Week</button>
+        </div>
+        <p id="tvGenreStatus" class="tv-genre-status" aria-live="polite">Loading TV genres...</p>
+    </section>
+
+
+    <!-- ============================= -->
+    <!-- OTT PLATFORM FILTER -->
+    <!-- ============================= -->
+
+    <section class="ott-filter-section" aria-labelledby="ottFilterTitle">
+
+        <div class="ott-filter-heading">
+            <div>
+                <h2 id="ottFilterTitle">Filter by OTT Platform</h2>
+                <p>Find movies available to stream in India.</p>
+            </div>
+            <span id="ottFilterStatus" class="ott-filter-status" aria-live="polite">
+                Loading platforms...
+            </span>
+        </div>
+
+        <div id="ottProviderFilters" class="ott-provider-filters" aria-label="OTT platform filters">
+            <button
+                type="button"
+                class="ott-filter-button is-selected"
+                data-provider-id="all"
+                aria-pressed="true"
+            >All Platforms</button>
+            <div id="ottProviderList" class="ott-provider-list">
+                <p class="loading">Loading platforms...</p>
+            </div>
+        </div>
+
     </section>
 
 
@@ -116,7 +163,7 @@
         id="movies"
     >
 
-        <h2>
+        <h2 id="catalogHeading">
             Movies
         </h2>
 
@@ -128,6 +175,39 @@
     </section>
 
 
+
+    <!-- ============================= -->
+    <!-- WATCHLIST -->
+    <!-- ============================= -->
+
+    <section
+        id="watchlistSection"
+        class="watchlist-section"
+        style="display: none;"
+    >
+
+        <div class="watchlist-header">
+            <h2>My Watchlist</h2>
+            <p class="watchlist-note">
+                Your Watchlist is synced to the local database on this computer and cached in this browser.
+            </p>
+            <p id="databaseSyncStatus" class="watchlist-note" data-database-status aria-live="polite">Connecting to the local database…</p>
+        </div>
+
+        <div
+            id="watchlistContainer"
+            class="watchlist-container"
+        ></div>
+
+    </section>
+
+    <section id="likesSection" class="watchlist-section likes-section" style="display: none;" aria-labelledby="likesTitle">
+        <div class="watchlist-header">
+            <h2 id="likesTitle">My Likes</h2>
+            <p class="watchlist-note">Your Likes are saved in this browser and remain separate from your Watchlist.</p>
+        </div>
+        <div id="likesContainer" class="watchlist-container"></div>
+    </section>
     <!-- ============================= -->
     <!-- MOVIE DETAILS -->
     <!-- ============================= -->
@@ -151,7 +231,82 @@
     </footer>
 
 
+    <div
+        id="trailerModal"
+        class="trailer-modal"
+        aria-hidden="true"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Movie trailer"
+        onclick="if (event.target === this) closeTrailer()"
+    >
+        <div class="trailer-modal-content">
+            <button
+                class="trailer-modal-close"
+                type="button"
+                aria-label="Close trailer"
+                onclick="closeTrailer()"
+            >×</button>
+            <div class="trailer-video-wrap">
+                <iframe
+                    id="trailerFrame"
+                    title="Movie trailer"
+                    src=""
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                    referrerpolicy="strict-origin-when-cross-origin"
+                    allowfullscreen
+                ></iframe>
+            </div>
+        </div>
+    </div>
+
+    <div class="auth-modal" id="loginModal" aria-hidden="true">
+        <div class="auth-modal-backdrop" data-auth-backdrop></div>
+        <section class="auth-dialog" role="dialog" aria-modal="true" aria-labelledby="loginTitle" tabindex="-1">
+            <button type="button" class="auth-close" id="loginCloseButton" aria-label="Close Login">×</button>
+            <p class="auth-eyebrow">CINEFIND ACCOUNT</p>
+            <h2 id="loginTitle">Welcome to CineFind</h2>
+            <form id="loginForm" novalidate>
+                <label class="auth-field" for="loginEmail">Email
+                    <input id="loginEmail" name="email" type="email" autocomplete="username" placeholder="Enter your email" required>
+                </label>
+                <label class="auth-field" for="loginPassword">Password
+                    <input id="loginPassword" name="password" type="password" autocomplete="current-password" placeholder="Enter your password" required>
+                </label>
+                <p class="auth-message" id="loginMessage" role="status" aria-live="polite"></p>
+                <button type="submit" class="auth-submit">Login</button>
+            </form>
+            <p class="auth-switch-copy">Don't have an account? <button type="button" class="auth-switch-button" id="loginToSignupLink">Sign Up</button></p>
+            <p class="auth-security-note">Your password is checked by the local account service and stored only as a salted hash.</p>
+        </section>
+    </div>
+
+    <div class="auth-modal" id="signupModal" aria-hidden="true">
+        <div class="auth-modal-backdrop" data-auth-backdrop></div>
+        <section class="auth-dialog" role="dialog" aria-modal="true" aria-labelledby="signupTitle" tabindex="-1">
+            <button type="button" class="auth-close" id="signupCloseButton" aria-label="Close Sign Up">×</button>
+            <p class="auth-eyebrow">CINEFIND ACCOUNT</p>
+            <h2 id="signupTitle">Create your account</h2>
+            <form id="signupForm" novalidate>
+                <label class="auth-field" for="signupEmail">Email
+                    <input id="signupEmail" name="email" type="email" autocomplete="username" placeholder="Enter your email" required>
+                </label>
+                <label class="auth-field" for="signupPassword">Password
+                    <input id="signupPassword" name="password" type="password" autocomplete="new-password" placeholder="Enter your password" required>
+                </label>
+                <label class="auth-field" for="signupConfirmPassword">Confirm Password
+                    <input id="signupConfirmPassword" name="confirmPassword" type="password" autocomplete="new-password" placeholder="Confirm your password" required>
+                </label>
+                <p class="auth-message" id="signupMessage" role="status" aria-live="polite"></p>
+                <button type="submit" class="auth-submit">Create Account</button>
+            </form>
+            <p class="auth-switch-copy">Already have an account? <button type="button" class="auth-switch-button" id="signupToLoginLink">Login</button></p>
+            <p class="auth-security-note">Your password is sent only to the local account service and stored as a salted hash.</p>
+        </section>
+    </div>
+    <script src="profile-sync.js"></script>
     <script src="script.js"></script>
+    <script src="account-ui.js"></script>
 
 </body>
 </html>

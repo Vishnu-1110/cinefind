@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#0f0f0f">
+    <title>Mood Discovery | CineFind</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="mood.css">
+</head>
+<body class="mood-page-body">
+    <nav class="navbar">
+        <div class="logo"><a href="index.html">🎬 CineFind</a></div>
+        <div class="nav-links">
+            <a href="index.html">Home</a>
+            <a href="index.html#movies">Movies</a>
+            <a href="index.html?media=tv#movies">Web Series</a>
+            <a href="mood.html" aria-current="page">🎭 Mood Discovery</a>
+            <a href="index.html?view=likes#likesSection" id="navLikes">My Likes</a>
+            <a href="index.html?view=watchlist#watchlistSection">Watchlist</a>
+            <button type="button" class="nav-login-button" id="authOpenLoginButton">Login</button>
+            <button type="button" class="nav-login-button" id="authOpenSignupButton">Sign Up</button>
+            <span class="auth-account-email" id="authAccountEmail" hidden></span>
+            <button type="button" class="nav-login-button" id="authLogoutButton" hidden>Logout</button>
+        </div>
+    </nav>
+
+    <main class="mood-page">
+        <header class="mood-page-header">
+            <p class="mood-eyebrow">CINEFIND · PERSONAL PICKS</p>
+            <h1>What Are You in the Mood For?</h1>
+            <p>Choose your mood, pick your available time, and discover something great to watch.</p>
+            <p class="mood-method-note">Picks use TMDB genres, keywords, and available details—not an exact emotional mood score.</p>
+        </header>
+
+        <section class="personal-recommendations-section" aria-labelledby="personalRecommendationsTitle">
+            <div class="mood-section-title-row">
+                <div>
+                    <p class="mood-eyebrow">CINEFIND · RULE-BASED PICKS</p>
+                    <h2 id="personalRecommendationsTitle">Recommended For You</h2>
+                    <p>Discover movies and series selected to match your interests.</p>
+                </div>
+                <button type="button" class="mood-primary-button" id="refreshPersonalRecommendations">Refresh recommendations</button>
+            </div>
+            <p class="recommendation-privacy-note">Recommendations use selected moods, preferences, and Watchlist genres. Supported preferences sync to the local database on this computer; recommendation feedback and viewing-time options stay in this browser.</p>
+            <p id="databaseSyncStatus" class="mood-live-status" data-database-status aria-live="polite">Connecting to the local database…</p>
+            <h3 class="preferences-subheading">Your Preferences</h3>
+            <div class="personal-recommendation-controls">
+                <label class="recommendation-control">Show me
+                    <select id="preferredMediaType"><option value="both">Movies &amp; TV Series</option><option value="movie">Movies</option><option value="tv">TV Series</option></select>
+                </label>
+                <label class="recommendation-control">Viewing time
+                    <select id="preferredDuration"><option value="any">Any duration</option><option value="20-30">20–30 minutes</option><option value="30-60">30–60 minutes</option><option value="60-120">1–2 hours</option><option value="120-plus">2+ hours</option></select>
+                </label>
+                <label class="recommendation-toggle"><input type="checkbox" id="includeWatchlistTitles"> Include titles already in my Watchlist</label>
+            </div>
+            <div class="recommendation-genre-controls">
+                <fieldset><legend>Favorite movie genres</legend><div id="favoriteMovieGenres" class="favorite-genre-options"><span class="mood-placeholder">Loading genres…</span></div></fieldset>
+                <fieldset><legend>Favorite TV genres</legend><div id="favoriteTVGenres" class="favorite-genre-options"><span class="mood-placeholder">Loading genres…</span></div></fieldset>
+            </div>
+            <div class="recommendation-preference-actions">
+                <button type="button" class="mood-quiet-button" id="clearRecommendationPreferences">Clear preferences</button>
+                <button type="button" class="mood-quiet-button" id="clearRecommendationFeedback">Clear feedback history</button>
+                <span id="personalRecommendationStatus" class="mood-live-status" aria-live="polite">Building recommendations from popular titles.</span>
+            </div>
+            <div id="personalRecommendationResults" class="mood-result-grid recommendation-grid" aria-live="polite"><p class="mood-placeholder">Loading recommendations…</p></div>
+        </section>
+        <section class="mood-picker-section" aria-labelledby="moodPickerTitle">
+            <div class="mood-section-title-row">
+                <div>
+                    <h2 id="moodPickerTitle">Choose a mood</h2>
+                    <p>Select one to explore matching movies and TV series. Your selected mood is saved with Your Preferences.</p>
+                </div>
+                <button type="button" class="mood-quiet-button" id="clearMoodButton">Clear mood</button>
+            </div>
+            <div class="mood-cards" id="moodCards" aria-label="Mood options">
+                <button type="button" class="mood-card" data-mood="feel-good"><span class="mood-emoji">😂</span><span>Happy &amp; Feel-Good</span></button>
+                <button type="button" class="mood-card" data-mood="emotional"><span class="mood-emoji">😢</span><span>Emotional &amp; Heartwarming</span></button>
+                <button type="button" class="mood-card" data-mood="thrilling"><span class="mood-emoji">😱</span><span>Thriller &amp; Suspense</span></button>
+                <button type="button" class="mood-card" data-mood="scary"><span class="mood-emoji">👻</span><span>Horror</span></button>
+                <button type="button" class="mood-card" data-mood="romantic"><span class="mood-emoji">❤️</span><span>Romance</span></button>
+                <button type="button" class="mood-card" data-mood="mind-bending"><span class="mood-emoji">🧠</span><span>Mind-Bending</span></button>
+                <button type="button" class="mood-card" data-mood="action"><span class="mood-emoji">💥</span><span>Action &amp; Adventure</span></button>
+                <button type="button" class="mood-card" data-mood="relaxing"><span class="mood-emoji">🌿</span><span>Relaxing &amp; Peaceful</span></button>
+                <button type="button" class="mood-card" data-mood="sci-fi"><span class="mood-emoji">🚀</span><span>Sci-Fi &amp; Futuristic</span></button>
+                <button type="button" class="mood-card" data-mood="family"><span class="mood-emoji">👨‍👩‍👧</span><span>Family Time</span></button>
+            </div>
+            <p class="mood-live-status" id="moodStatus" aria-live="polite">Choose a mood to see matching picks.</p>
+        </section>
+
+        <section class="mood-results-section" aria-labelledby="moodResultsTitle">
+            <div class="mood-section-title-row">
+                <div>
+                    <h2 id="moodResultsTitle">Mood picks</h2>
+                    <p id="moodResultsDescription">Movies and TV series matched to the selected mood.</p>
+                </div>
+            </div>
+            <div id="moodResults" class="mood-result-grid" aria-live="polite"></div>
+        </section>
+
+        <section class="watch-time-section" aria-labelledby="watchTimeTitle">
+            <div class="mood-section-title-row watch-time-heading">
+                <div>
+                    <p class="mood-eyebrow">MOOD + VIEWING TIME</p>
+                    <h2 id="watchTimeTitle">How Much Time Do You Have?</h2>
+                    <p id="recommendationMoodStatus">Select a mood above, then choose your viewing window.</p>
+                </div>
+                <div class="watch-time-actions">
+                    <button type="button" class="mood-primary-button" id="surpriseMeButton">Surprise Me</button>
+                    <button type="button" class="mood-quiet-button" id="resetRecommendationsButton">Reset</button>
+                </div>
+            </div>
+            <div class="duration-options" id="durationOptions" aria-label="Available viewing time">
+                <button type="button" class="duration-button" data-duration="20-30">20–30 minutes</button>
+                <button type="button" class="duration-button is-selected" data-duration="30-60">30–60 minutes</button>
+                <button type="button" class="duration-button" data-duration="60-120">1–2 hours</button>
+                <button type="button" class="duration-button" data-duration="120-plus">2+ hours</button>
+            </div>
+            <div class="recommendation-explainer">Short windows favor shorter movies and TV episodes. TV runtime is per episode, not the total series length. Unknown runtimes are never guessed.</div>
+            <div id="recommendationResults" class="mood-result-grid recommendation-grid" aria-live="polite">
+                <p class="mood-placeholder">Choose a mood to get recommendations for your available time.</p>
+            </div>
+        </section>
+    </main>
+
+    <footer class="mood-page-footer">
+        <p>© 2026 CineFind. Mood suggestions are based on available TMDB genre, keyword, and runtime metadata.</p>
+    </footer>
+
+    <div class="auth-modal" id="loginModal" aria-hidden="true">
+        <div class="auth-modal-backdrop" data-auth-backdrop></div>
+        <section class="auth-dialog" role="dialog" aria-modal="true" aria-labelledby="loginTitle" tabindex="-1">
+            <button type="button" class="auth-close" id="loginCloseButton" aria-label="Close Login">×</button>
+            <p class="auth-eyebrow">CINEFIND ACCOUNT</p>
+            <h2 id="loginTitle">Welcome to CineFind</h2>
+            <form id="loginForm" novalidate>
+                <label class="auth-field" for="loginEmail">Email
+                    <input id="loginEmail" name="email" type="email" autocomplete="username" placeholder="Enter your email" required>
+                </label>
+                <label class="auth-field" for="loginPassword">Password
+                    <input id="loginPassword" name="password" type="password" autocomplete="current-password" placeholder="Enter your password" required>
+                </label>
+                <p class="auth-message" id="loginMessage" role="status" aria-live="polite"></p>
+                <button type="submit" class="auth-submit">Login</button>
+            </form>
+            <p class="auth-switch-copy">Don't have an account? <button type="button" class="auth-switch-button" id="loginToSignupLink">Sign Up</button></p>
+            <p class="auth-security-note">Your password is checked by the local account service and stored only as a salted hash.</p>
+        </section>
+    </div>
+
+    <div class="auth-modal" id="signupModal" aria-hidden="true">
+        <div class="auth-modal-backdrop" data-auth-backdrop></div>
+        <section class="auth-dialog" role="dialog" aria-modal="true" aria-labelledby="signupTitle" tabindex="-1">
+            <button type="button" class="auth-close" id="signupCloseButton" aria-label="Close Sign Up">×</button>
+            <p class="auth-eyebrow">CINEFIND ACCOUNT</p>
+            <h2 id="signupTitle">Create your account</h2>
+            <form id="signupForm" novalidate>
+                <label class="auth-field" for="signupEmail">Email
+                    <input id="signupEmail" name="email" type="email" autocomplete="username" placeholder="Enter your email" required>
+                </label>
+                <label class="auth-field" for="signupPassword">Password
+                    <input id="signupPassword" name="password" type="password" autocomplete="new-password" placeholder="Enter your password" required>
+                </label>
+                <label class="auth-field" for="signupConfirmPassword">Confirm Password
+                    <input id="signupConfirmPassword" name="confirmPassword" type="password" autocomplete="new-password" placeholder="Confirm your password" required>
+                </label>
+                <p class="auth-message" id="signupMessage" role="status" aria-live="polite"></p>
+                <button type="submit" class="auth-submit">Create Account</button>
+            </form>
+            <p class="auth-switch-copy">Already have an account? <button type="button" class="auth-switch-button" id="signupToLoginLink">Login</button></p>
+            <p class="auth-security-note">Your password is sent only to the local account service and stored as a salted hash.</p>
+        </section>
+    </div>
+    <script src="profile-sync.js"></script>
+    <script src="script.js"></script>
+    <script src="account-ui.js"></script>
+    <script src="mood.js"></script>
+</body>
+</html>
