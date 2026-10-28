@@ -39,10 +39,7 @@ app.include_router(profile_router)
 # Restrict credentialed browser access to local development origins.
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://127.0.0.1:5500", "http://localhost:5500",
-        "http://127.0.0.1:5173", "http://localhost:5173",
-    ],
+    allow_origins=[origin.strip().rstrip("/") for origin in settings.frontend_origins.split(",") if origin.strip()],
     allow_origin_regex=r"^http://(127\.0\.0\.1|localhost)(:\d+)?$",
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],

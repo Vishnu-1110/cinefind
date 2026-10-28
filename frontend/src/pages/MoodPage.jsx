@@ -4,7 +4,7 @@ import DetailsModal from "../components/DetailsModal";
 import MovieCard from "../components/MovieCard";
 import Navbar from "../components/Navbar";
 import TrailerModal from "../components/TrailerModal";
-import { dedupeByMedia, tmdb } from "../services/tmdb";
+import { backendApi, dedupeByMedia, tmdb } from "../services/tmdb";
 import { hasTitle, LIKES_KEY, readStoredList, toggleStoredTitle, WATCHLIST_KEY, writeStoredList } from "../services/storage";
 
 const MOODS = [
@@ -67,12 +67,21 @@ export default function MoodPage() {
   const [detailItem, setDetailItem] = useState(null);
   const [trailerKey, setTrailerKey] = useState("");
   const [accountMode, setAccountMode] = useState("");
+  const [account, setAccount] = useState(null);
   const [surpriseId, setSurpriseId] = useState(null);
   const moodSequence = useRef(0);
   const personalSequence = useRef(0);
 
   useEffect(() => { writeStoredList(WATCHLIST_KEY, watchlist); }, [watchlist]);
   useEffect(() => { writeStoredList(LIKES_KEY, likes); }, [likes]);
+  useEffect(() => {
+    let alive = true;
+    backendApi("/api/auth/me").then(value => { if (alive) setAccount(value); }).catch(() => { if (alive) setAccount(null); });
+    return () => { alive = false; };
+  }, []);
+  const logout = async () => {
+    try { await backendApi("/api/auth/logout", { method: "POST" }); } catch {} finally { setAccount(null); }
+  };
   useEffect(() => { try { localStorage.setItem(PREFS_KEY, JSON.stringify(prefs)); } catch {} }, [prefs]);
   useEffect(() => { try { localStorage.setItem(FEEDBACK_KEY, JSON.stringify(feedback)); } catch {} }, [feedback]);
   useEffect(() => {
@@ -202,7 +211,7 @@ export default function MoodPage() {
 
   return (
     <div className="min-h-screen bg-black text-white">
-      <Navbar mode="movie" watchlistCount={watchlist.length} likesCount={likes.length} onSelectMedia={type => window.location.assign(`./index.html?media=${type}`)} onSelectView={view => window.location.assign(`./index.html?view=${view}`)} onLogin={() => setAccountMode("login")} onSignup={() => setAccountMode("signup")} />
+      <Navbar mode="movie" watchlistCount={watchlist.length} likesCount={likes.length} account={account} onLogout={logout} onSelectMedia={type => window.location.assign(`./index.html?media=${type}`)} onSelectView={view => window.location.assign(`./index.html?view=${view}`)} onLogin={() => setAccountMode("login")} onSignup={() => setAccountMode("signup")} />
       <main className="mood-page">
         <header className="mood-page-header">
           <p className="mood-eyebrow">CINEFIND · PERSONAL PICKS</p>
@@ -259,7 +268,7 @@ export default function MoodPage() {
         </section>
       </main>
       <footer className="mood-page-footer">CineFind mood suggestions use TMDB genre, keyword, and runtime metadata.</footer>
-      <AccountModals mode={accountMode} onClose={() => setAccountMode("")} onSwitch={setAccountMode} />
+      <AccountModals mode={accountMode} onClose={() => setAccountMode("")} onSwitch={setAccountMode} onAuthenticated={value => { setAccount(value); setAccountMode(""); }} />
       <DetailsModal item={detailItem} onClose={() => setDetailItem(null)} onOpen={setDetailItem} isSaved={isSaved} isLiked={isLiked} onToggleWatchlist={toggleWatchlist} onToggleLike={toggleLike} onTrailer={setTrailerKey} />
       <TrailerModal videoKey={trailerKey} onClose={() => setTrailerKey("")} />
     </div>

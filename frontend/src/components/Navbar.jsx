@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-export default function Navbar({ mode, watchlistCount, likesCount, onSelectMedia, onSelectView, onLogin, onSignup }) {
+export default function Navbar({ mode, watchlistCount, likesCount, account, onSelectMedia, onSelectView, onLogin, onSignup, onLogout }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const closeMenu = () => setMenuOpen(false);
   return (
@@ -14,8 +14,13 @@ export default function Navbar({ mode, watchlistCount, likesCount, onSelectMedia
         <a href="./mood.html">Mood Discovery</a>
         <a href="#likes" onClick={event => { event.preventDefault(); closeMenu(); onSelectView("likes"); }}>My Likes{likesCount ? ` (${likesCount})` : ""}</a>
         <a href="#watchlist" onClick={event => { event.preventDefault(); closeMenu(); onSelectView("watchlist"); }}>Watchlist{watchlistCount ? ` (${watchlistCount})` : ""}</a>
-        <button type="button" className="nav-login-button" onClick={() => { closeMenu(); onLogin(); }}>Login</button>
-        <button type="button" className="nav-login-button" onClick={() => { closeMenu(); onSignup(); }}>Sign Up</button>
+        {account ? <>
+          <span className="nav-account-email" title={account.email}>{account.email}</span>
+          <button type="button" className="nav-login-button" onClick={() => { closeMenu(); onLogout(); }}>Logout</button>
+        </> : <>
+          <button type="button" className="nav-login-button" onClick={() => { closeMenu(); onLogin(); }}>Login</button>
+          <button type="button" className="nav-login-button" onClick={() => { closeMenu(); onSignup(); }}>Sign Up</button>
+        </>}
       </div>
     </nav>
   );

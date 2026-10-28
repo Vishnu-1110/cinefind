@@ -6,7 +6,7 @@ import Navbar from "../components/Navbar";
 import OTTPlatformFilter from "../components/OTTPlatformFilter";
 import TrailerModal from "../components/TrailerModal";
 import { discoverPage, EMPTY_FILTERS, parseNaturalQuery } from "../services/discovery";
-import { getProviderCatalog, tmdb } from "../services/tmdb";
+import { backendApi, getProviderCatalog, tmdb } from "../services/tmdb";
 import { hasTitle, LIKES_KEY, readStoredList, toggleStoredTitle, WATCHLIST_KEY, writeStoredList } from "../services/storage";
 
 const LANGUAGE_OPTIONS = [
@@ -68,6 +68,7 @@ export default function CatalogPage() {
   const [detailsItem, setDetailsItem] = useState(null);
   const [trailerKey, setTrailerKey] = useState("");
   const [accountMode, setAccountMode] = useState("");
+  const [account, setAccount] = useState(null);
   const [view, setView] = useState(() => ["likes", "watchlist"].includes(new URLSearchParams(window.location.search).get("view")) ? new URLSearchParams(window.location.search).get("view") : "browse");
   const [watchlist, setWatchlist] = useState(() => readStoredList(WATCHLIST_KEY));
   const [likes, setLikes] = useState(() => readStoredList(LIKES_KEY));
@@ -76,6 +77,12 @@ export default function CatalogPage() {
 
   useEffect(() => { writeStoredList(WATCHLIST_KEY, watchlist); }, [watchlist]);
   useEffect(() => { writeStoredList(LIKES_KEY, likes); }, [likes]);
+
+  useEffect(() => {
+    let alive = true;
+    backendApi("/api/auth/me").then(value => { if (alive) setAccount(value); }).catch(() => { if (alive) setAccount(null); });
+    return () => { alive = false; };
+  }, []);
 
   useEffect(() => {
     let alive = true;
@@ -145,6 +152,9 @@ export default function CatalogPage() {
   const toggleLike = item => setLikes(current => toggleStoredTitle(current, item, item.media_type || "movie"));
   const isSaved = item => hasTitle(watchlist, item, item.media_type || "movie");
   const isLiked = item => hasTitle(likes, item, item.media_type || "movie");
+  const logout = async () => {
+    try { await backendApi("/api/auth/logout", { method: "POST" }); } catch {} finally { setAccount(null); }
+  };
   const updateFilters = change => {
     parseSequence.current += 1; setParsing(false); setParseResult(null);
     setFilters(current => ({ ...current, ...change })); setPage(1); setView("browse");
@@ -201,7 +211,7 @@ export default function CatalogPage() {
 
   return (
     <div className="min-h-screen bg-black text-white">
-      <Navbar mode={filters.contentType} watchlistCount={watchlist.length} likesCount={likes.length} onSelectMedia={openMediaType} onSelectView={setViewAndBrowse} onLogin={() => setAccountMode("login")} onSignup={() => setAccountMode("signup")} />
+      <Navbar mode={filters.contentType} watchlistCount={watchlist.length} likesCount={likes.length} account={account} onLogout={logout} onSelectMedia={openMediaType} onSelectView={setViewAndBrowse} onLogin={() => setAccountMode("login")} onSignup={() => setAccountMode("signup")} />
       <main>
         <section className="hero">
           <h1>Find Something Great to Watch</h1>
@@ -255,7 +265,7 @@ export default function CatalogPage() {
         </section>}
       </main>
       <footer className="site-footer p-6 text-center text-sm text-neutral-500">CineFind · Movie and TV discovery powered by TMDB. Streaming data provided by JustWatch where available.</footer>
-      <AccountModals mode={accountMode} onClose={() => setAccountMode("")} onSwitch={setAccountMode} />
+      <AccountModals mode={accountMode} onClose={() => setAccountMode("")} onSwitch={setAccountMode} onAuthenticated={value => { setAccount(value); setAccountMode(""); }} />
       <DetailsModal item={detailsItem} onClose={() => setDetailsItem(null)} onOpen={setDetailsItem} isSaved={isSaved} isLiked={isLiked} onToggleWatchlist={toggleWatchlist} onToggleLike={toggleLike} onTrailer={setTrailerKey} />
       <TrailerModal videoKey={trailerKey} onClose={() => setTrailerKey("")} />
     </div>

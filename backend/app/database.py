@@ -9,8 +9,14 @@ class Base(DeclarativeBase):
     pass
 
 def _database_url_for_local_use(raw_url: str) -> URL:
-    """Resolve relative SQLite paths from the backend folder."""
+    """Select psycopg 3, require PostgreSQL SSL, and resolve local SQLite paths."""
+    if raw_url.startswith("postgres://"):
+        raw_url = "postgresql+psycopg://" + raw_url.removeprefix("postgres://")
+    elif raw_url.startswith("postgresql://"):
+        raw_url = "postgresql+psycopg://" + raw_url.removeprefix("postgresql://")
     url = make_url(raw_url)
+    if url.get_backend_name() == "postgresql" and "sslmode" not in url.query:
+        url = url.update_query_dict({"sslmode": "require"})
     if url.get_backend_name() != "sqlite" or not url.database or url.database == ":memory:":
         return url
     database_path = Path(url.database)
@@ -23,6 +29,8 @@ database_url = _database_url_for_local_use(settings.database_url)
 engine_options = {"pool_pre_ping": True}
 if database_url.get_backend_name() == "sqlite":
     engine_options["connect_args"] = {"check_same_thread": False}
+else:
+    engine_options.update({"pool_size": 3, "max_overflow": 2, "pool_timeout": 30})
 engine = create_engine(database_url, **engine_options)
 SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False)
 

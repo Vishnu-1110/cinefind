@@ -9,6 +9,7 @@ class Settings(BaseSettings):
     app_name: str = "CineFind API"
     app_env: str = "development"
     database_url: str = "sqlite:///./cinefind.db"
+    frontend_origins: str = "http://127.0.0.1:5173,http://localhost:5173"
     tmdb_bearer_token: str = ""
     model_config = SettingsConfigDict(env_file=BACKEND_DIR / ".env", env_file_encoding="utf-8", extra="ignore")
 

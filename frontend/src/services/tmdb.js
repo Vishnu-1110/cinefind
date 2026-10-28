@@ -1,4 +1,5 @@
-export const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8001").replace(/\/$/, "");
+const configuredApiUrl = import.meta.env.VITE_API_BASE_URL?.trim();
+export const API_BASE_URL = (configuredApiUrl || (import.meta.env.DEV ? "http://127.0.0.1:8001" : "")).replace(/\/$/, "");
 const inFlightRequests = new Map();
 
 export const TMDB_IMAGE = "https://image.tmdb.org/t/p/w500";
@@ -6,7 +7,8 @@ export const TMDB_BACKDROP = "https://image.tmdb.org/t/p/original";
 export const TMDB_PROVIDER_IMAGE = "https://image.tmdb.org/t/p/w185";
 
 export async function backendApi(path, options = {}) {
-  const response = await fetch(`${API_BASE_URL}${path}`, options);
+  if (!API_BASE_URL) throw new Error("CineFind's online API address has not been configured yet.");
+  const response = await fetch(`${API_BASE_URL}${path}`, { ...options, credentials: options.credentials || "include" });
   const data = await response.json().catch(() => ({}));
   if (!response.ok) throw new Error(data.detail || `CineFind API returned ${response.status}.`);
   return data;

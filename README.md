@@ -38,3 +38,5 @@ The health endpoint is `http://127.0.0.1:8001/api/health`; API documentation is 
 The root HTML files remain in place for the existing GitHub Pages site. The React/Vite source is uploaded under `frontend/`, but this repository does not yet have a Vite Pages workflow, so uploading the source does not deploy that frontend. GitHub Pages also cannot run FastAPI or host a persistent SQLite database. Deploy the API and a persistent hosted database separately before connecting the online site to account or database features.
 
 The local SQLite database, virtual environments, build output, dependencies, backups, and private environment files are excluded by `.gitignore`. Example environment files contain placeholders only.
+
+For the staged Supabase, Render, and GitHub Pages setup, see [DEPLOYMENT.md](DEPLOYMENT.md). The cloud services and Pages publishing target still need to be confirmed in their dashboards before the Vite build can be published.

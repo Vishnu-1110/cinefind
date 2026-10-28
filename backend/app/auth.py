@@ -84,7 +84,7 @@ def set_session_cookie(response: Response, account: UserAccount, session: Sessio
         max_age=SESSION_DAYS * 24 * 60 * 60,
         httponly=True,
         secure=settings.app_env == "production",
-        samesite="lax",
+        samesite="none" if settings.app_env == "production" else "lax",
         path="/",
     )
 
@@ -138,7 +138,7 @@ def logout(request: Request, response: Response, session: DatabaseSession) -> Re
         if row is not None:
             session.delete(row)
             session.commit()
-    response.delete_cookie(key=SESSION_COOKIE, path="/", httponly=True, secure=settings.app_env == "production", samesite="lax")
+    response.delete_cookie(key=SESSION_COOKIE, path="/", httponly=True, secure=settings.app_env == "production", samesite="none" if settings.app_env == "production" else "lax")
     response.status_code = status.HTTP_204_NO_CONTENT
     return response
 

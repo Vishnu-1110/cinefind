@@ -1,11 +1,13 @@
 import { useEffect, useRef, useState } from "react";
+import { backendApi } from "../services/tmdb";
 
-export default function AccountModals({ mode, onClose, onSwitch }) {
+export default function AccountModals({ mode, onClose, onSwitch, onAuthenticated }) {
   const emailRef = useRef(null);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [message, setMessage] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     if (!mode) return undefined;
@@ -17,18 +19,31 @@ export default function AccountModals({ mode, onClose, onSwitch }) {
     return () => { document.body.style.overflow = previousOverflow; window.removeEventListener("keydown", onKeyDown); };
   }, [mode, onClose]);
 
-  useEffect(() => { setEmail(""); setPassword(""); setConfirmPassword(""); setMessage(""); }, [mode]);
+  useEffect(() => { setEmail(""); setPassword(""); setConfirmPassword(""); setMessage(""); setSubmitting(false); }, [mode]);
   if (!mode) return null;
   const signup = mode === "signup";
-  const submit = event => {
+  const submit = async event => {
     event.preventDefault();
     if (!email.trim() || !password || (signup && !confirmPassword)) setMessage("Please complete all required fields.");
     else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) setMessage("Enter a valid email address.");
     else if (signup && password !== confirmPassword) setMessage("The passwords do not match.");
-    else setMessage(signup
-      ? "Account creation is unavailable until a trusted authentication service is connected. Your password was not saved or sent."
-      : "Login is unavailable until a trusted authentication service is connected. Your password was not saved or sent.");
-    setPassword(""); setConfirmPassword("");
+    else {
+      setSubmitting(true);
+      setMessage("");
+      try {
+        const account = await backendApi(`/api/auth/${signup ? "signup" : "login"}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: email.trim(), password }),
+        });
+        setMessage(signup ? "Your account is ready. You are signed in." : "You are signed in.");
+        onAuthenticated?.(account);
+      } catch (error) {
+        setMessage(error.message || "CineFind could not sign you in. Please try again.");
+      } finally {
+        setPassword(""); setConfirmPassword(""); setSubmitting(false);
+      }
+    }
   };
 
   return (
@@ -43,12 +58,12 @@ export default function AccountModals({ mode, onClose, onSwitch }) {
           <label className="auth-field">Password<input type="password" autoComplete={signup ? "new-password" : "current-password"} placeholder="Enter your password" value={password} onChange={event => setPassword(event.target.value)} required /></label>
           {signup && <label className="auth-field">Confirm Password<input type="password" autoComplete="new-password" placeholder="Confirm your password" value={confirmPassword} onChange={event => setConfirmPassword(event.target.value)} required /></label>}
           <p className="auth-message" role="status" aria-live="polite">{message}</p>
-          <button type="submit" className="auth-submit w-full">{signup ? "Create Account" : "Login"}</button>
+          <button type="submit" className="auth-submit w-full" disabled={submitting}>{submitting ? "Please wait…" : signup ? "Create Account" : "Login"}</button>
         </form>
         <p className="auth-switch-copy">{signup ? "Already have an account? " : "Don't have an account? "}
           <button type="button" className="auth-switch-button" onClick={() => onSwitch(signup ? "login" : "signup")}>{signup ? "Login" : "Sign Up"}</button>
         </p>
-        <p className="auth-security-note">CineFind does not store or send your password. A real account service has not been connected.</p>
+        <p className="auth-security-note">Your password is sent only to the configured CineFind API. The backend stores a salted password hash.</p>
       </section>
     </div>
   );
