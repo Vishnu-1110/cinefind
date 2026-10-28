@@ -1,15 +1,36 @@
-# Local secrets
+# Local secrets and environment files
 .env
 **/.env
+.env.*
+**/.env.*
+!.env.example
+!**/.env.example
+
+# Python environments and generated files
 .venv/
 venv/
 **/__pycache__/
 *.py[cod]
 .pytest_cache/
-backend/data/
+
+# Local databases
 *.db
 *.sqlite
 *.sqlite3
 
-work/
+# Frontend dependencies and generated output
 node_modules/
+**/node_modules/
+dist/
+**/dist/
+.pnpm-store/
+**/.pnpm-store/
+
+# Local backups and generated workspace files
+work/
+backups-v9.0/
+outputs/
+
+# Operating system files
+.DS_Store
+Thumbs.db

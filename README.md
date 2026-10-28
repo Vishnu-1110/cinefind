@@ -1,17 +1,40 @@
 # CineFind
 
-CineFind is a movie and TV discovery website with a small FastAPI backend for local account, Watchlist, preferences, and TMDB proxy requests.
+CineFind is a movie and TV discovery project. The current React application is in `frontend/`; the FastAPI service and its SQLite development configuration are in `backend/`.
 
-## Run locally
+## Run the React frontend locally
 
-1. Open a terminal in this project folder.
-2. Install the backend requirements and create `backend/.env` from `backend/.env.example`.
-3. Set `TMDB_BEARER_TOKEN` in `backend/.env` to your TMDB v4 read access token. Keep `.env` private and never commit it.
-4. Start FastAPI from the `backend` folder with `python -m uvicorn app.main:app --reload`.
-5. Open `http://127.0.0.1:8000/` for CineFind or `/docs` for the API documentation.
+From the repository folder, open a terminal and run:
 
-The backend serves only the website files listed in its allow-list. TMDB requests are forwarded server-side so the bearer token is not embedded in browser JavaScript.
+```powershell
+cd frontend
+pnpm install --frozen-lockfile
+pnpm run dev
+```
 
-## Local account and data note
+Vite prints the local website address, normally `http://127.0.0.1:5173/`.
 
-Accounts, Watchlist items, and supported preferences are stored in the local SQLite database. Login cookies and account routes are intended for local learning only. Before exposing this API to the internet, add production authentication controls, HTTPS, rate limits, and security review. `.env`, SQLite databases, virtual environments, and local backups are excluded from Git.
+## Run the FastAPI backend locally
+
+In a second terminal:
+
+```powershell
+cd backend
+python -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+if (-not (Test-Path .env)) { Copy-Item .env.example .env }
+```
+
+Set `TMDB_BEARER_TOKEN` in the private `backend/.env` file. Do not commit `.env` or put the token in a `VITE_` variable. Start the service on port 8001, which matches `frontend/.env.example`:
+
+```powershell
+.\.venv\Scripts\python.exe -m uvicorn app.main:app --host 127.0.0.1 --port 8001
+```
+
+The health endpoint is `http://127.0.0.1:8001/api/health`; API documentation is at `/docs`.
+
+## GitHub Pages and backend hosting
+
+The root HTML files remain in place for the existing GitHub Pages site. The React/Vite source is uploaded under `frontend/`, but this repository does not yet have a Vite Pages workflow, so uploading the source does not deploy that frontend. GitHub Pages also cannot run FastAPI or host a persistent SQLite database. Deploy the API and a persistent hosted database separately before connecting the online site to account or database features.
+
+The local SQLite database, virtual environments, build output, dependencies, backups, and private environment files are excluded by `.gitignore`. Example environment files contain placeholders only.

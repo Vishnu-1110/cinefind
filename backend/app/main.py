@@ -13,7 +13,8 @@ from .auth import router as auth_router
 from .config import settings
 from .database import check_database_connection, initialize_database
 from .routes import router as profile_router
-from .schemas import HealthResponse
+from .schemas import DiscoveryParseRequest, DiscoveryParseResponse, HealthResponse
+from .discovery import parse_discovery_query
 
 logger = logging.getLogger("cinefind.backend")
 
@@ -60,6 +61,12 @@ def health_check() -> HealthResponse:
             detail="The backend is running, but the database is unavailable.",
         ) from None
     return HealthResponse(status="ok", database="connected", environment=settings.app_env)
+
+@app.post("/api/discovery/parse", response_model=DiscoveryParseResponse, tags=["Discovery"])
+def parse_discovery(payload: DiscoveryParseRequest) -> DiscoveryParseResponse:
+    """Turn a natural-language discovery query into safe structured filters."""
+    return parse_discovery_query(payload.query)
+
 
 @app.get("/api/tmdb/{tmdb_path:path}", include_in_schema=False)
 def proxy_tmdb(tmdb_path: str, request: Request) -> Response:
