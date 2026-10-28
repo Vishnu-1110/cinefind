@@ -7,6 +7,8 @@ import tailwindcss from "@tailwindcss/vite";
 const projectRoot = fileURLToPath(new URL(".", import.meta.url));
 
 export default defineConfig({
+  // This is a repository Pages site at /cinefind/, not the account root URL.
+  base: "/cinefind/",
   plugins: [react(), tailwindcss()],
   server: { host: "127.0.0.1", port: 5173, strictPort: true },
   build: {

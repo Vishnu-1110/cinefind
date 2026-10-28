@@ -2,9 +2,9 @@
 
 ## Current state
 
-The repository contains a React/Vite frontend and a FastAPI backend. The backend can use SQLite locally or PostgreSQL through `DATABASE_URL`; it keeps the SQLite database when that variable is not changed. This guide does not copy, delete, or migrate the local database.
+The repository contains a React/Vite frontend and a FastAPI backend. The backend can use SQLite locally or PostgreSQL through `DATABASE_URL`; it keeps SQLite for local development. No local database was copied, deleted, or migrated.
 
-Cloud services cannot be provisioned from this repository. Before deployment, check whether a CineFind Supabase project and Render Web Service already exist. Reuse an existing service only after checking its current settings and data.
+The Render service is live at `https://cinefind-ruoi.onrender.com`. Its `/api/health` endpoint has been verified to return `status: ok`, `database: connected`, and `environment: production`. The TMDB proxy was still unconfigured at the last check; add the rotated token privately in Render before publishing the frontend.
 
 ## Supabase database
 
@@ -28,21 +28,21 @@ Set these in the Render service's Environment settings:
 
 - `APP_ENV` = `production`
 - `DATABASE_URL` = the private Supabase Session pooler URL
-- `FRONTEND_ORIGINS` = `https://vishnu-1110.github.io`
+- `FRONTEND_ORIGINS` = `https://vishnu-1110.github.io,http://127.0.0.1:5173,http://localhost:5173`
 - `TMDB_BEARER_TOKEN` = the rotated TMDB read token, entered privately in Render
 
-If the actual Pages origin differs, use that exact origin in `FRONTEND_ORIGINS` (scheme and host, no path). After deploy, check `https://<actual-render-host>/api/health` and `/docs`. Do not assume a service URL before Render shows it.
+If the Pages origin differs, use its exact origin (scheme and host, no path) in `FRONTEND_ORIGINS`. The current API is `https://cinefind-ruoi.onrender.com`; its health endpoint and docs are `/api/health` and `/docs`.
 
 ## GitHub Pages frontend
 
-The repository has no existing Actions workflow for Vite, and the GitHub Pages publishing settings and exact Pages URL could not be read through the available GitHub connection. The current root HTML site is preserved. Do not switch its publishing source until the intended Pages URL is confirmed.
+The repository had no Pages workflow. The current project Pages URL was verified as `https://vishnu-1110.github.io/cinefind/`; the account-root URL returns 404. A manual workflow has now been added at `.github/workflows/deploy-pages.yml`, and Vite is configured with the `/cinefind/` base path. The existing root HTML files remain unchanged as a rollback copy.
 
-Once the backend is live and the Pages target is confirmed:
+After adding the rotated TMDB token in Render:
 
-1. Set the GitHub Actions repository variable `VITE_API_BASE_URL` to the actual Render HTTPS origin, with no trailing slash. This is a public API address, not a secret.
-2. Configure GitHub Pages to publish through GitHub Actions.
-3. Build `frontend/` with `pnpm install --frozen-lockfile` and `pnpm run build`; publish `frontend/dist`.
-4. Use the Vite base path that matches the confirmed URL. A repository Pages URL usually includes `/cinefind/`; a user-site URL uses `/`.
+1. In repository **Settings → Pages**, set the build and deployment source to **GitHub Actions**.
+2. In **Actions**, run **Deploy CineFind to GitHub Pages** using `main`.
+3. The workflow builds `frontend/` with `pnpm install --frozen-lockfile` and `pnpm run build`, sets the public Render API origin as `VITE_API_BASE_URL`, and publishes `frontend/dist`.
+4. Verify `https://vishnu-1110.github.io/cinefind/` after the workflow succeeds.
 
 Never put database credentials or TMDB bearer tokens in `VITE_` variables. The frontend now refuses to send API requests to localhost in a production build if `VITE_API_BASE_URL` is missing.
 
@@ -54,4 +54,5 @@ Keep `backend/.env` and `frontend/.env` private. For local backend development, 
 
 - The account forms now call the existing FastAPI signup/login routes and use the backend's HttpOnly session cookie. Cross-site cookies require HTTPS and browser third-party cookie support; a custom domain that keeps the frontend and API same-site is more reliable.
 - Watchlist, Likes, recommendation preferences, and feedback currently remain in browser `localStorage`. Although backend profile endpoints exist, those frontend features are not yet synchronized to the database across devices.
-- Existing SQLite data is not copied to Supabase. No cloud database or Render service has been inspected or changed in this stage.
+- Likes, Watchlist, recommendation preferences, and feedback remain browser-local and do not sync across devices.
+- Existing SQLite data is not copied to Supabase.
